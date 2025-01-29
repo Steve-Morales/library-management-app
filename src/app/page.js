@@ -1,101 +1,367 @@
+'use client'
 import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import Link from "next/link";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [bookList, setBookList] = useState([]);
+  const [bookID, setBookID] = useState("");
+  const [book, setBook] = useState({ bookID: "", author: "", title: "", published: "", isbn_10: "", isbn_13: "", publisher: "" });
+  const [bookData, setBookData] = useState({ author: "", title: "", published: "", isbn_10: "", isbn_13: "", publisher: "" });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+
+  const columns = useMemo(
+    () => [
+      { Header: "Book ID", accessor: "bookId" },
+      { Header: "Author", accessor: "author" },
+      { Header: "Title", accessor: "title" },
+      { Header: "Published", accessor: "published" },
+      { Header: "ISBN 10", accessor: "isbn_10" },
+      { Header: "ISBN 13", accessor: "isbn_13" },
+      { Header: "Publisher", accessor: "publisher" }
+    ],
+    []
+  );
+
+  const getBooks = () => {
+    axios.get("http://localhost:8086/api/books").then((res) => {
+      setBookList(res.data);
+    });
+  };
+
+  const getBook = () => {
+    axios.get("http://localhost:8086/api/books", bookID).then((res) => {
+      setBook(res.data);
+    });
+  };
+
+  const addBook = () => {
+    console.log(bookData);
+    axios.post("http://localhost:8086/api/books", bookData).then((res) => {
+      console.log(res.data);
+      setShowAddForm(false);
+    });
+  };
+
+  const updateBook = () => {
+    axios.put(`http://localhost:8086/api/books/${bookID}`, bookData).then((res) => {
+      console.log(res.data);
+      setShowEditForm(false);
+    });
+  };
+
+  const deleteBook = () => {
+    axios.delete(`http://localhost:8086/api/books/${bookID}`).then((res) => {
+      console.log(res.data);
+      setShowDeletePopup(false);
+    });
+  };
+
+  useEffect(() => {
+    getBooks();
+  }, []);
+
+  const formatDate = (date) => {
+    if (!date) return "";
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return new Date(date).toLocaleDateString('en-US', options);
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h1>Welcome to the App</h1>
+        <p>Select a page to manage:</p>
+        <ul style={{ listStyleType: 'none' }}>
+          <li style={{ margin: '10px' }}>
+            <Link href="/people" style={{ color: 'blue', textDecoration: 'underline' }}>
+              <p >Go to People Page</p>
+            </Link>
+          </li>
+          <li style={{ margin: '10px', color: 'blue', textDecoration: 'underline' }}>
+            <Link href="/checkout">
+              <p>Go to CheckOut Page</p>
+            </Link>
+          </li>
+        </ul>
+      </div>
+      <h1 className="text-3xl font-bold text-center mb-8">Book Management</h1>
+
+      {/* Add Book Button */}
+      <button
+        onClick={() => setShowAddForm(true)}
+        className="px-4 py-2 bg-blue-500 text-white rounded-md mb-4"
+      >
+        Add Book
+      </button>
+
+      {/* Table for displaying books */}
+      <table className="min-w-full table-auto border-collapse">
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th key={col.accessor} className="px-4 py-2 text-left border-b">{col.Header}</th>
+            ))}
+            <th className="px-4 py-2 text-left border-b">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bookList.map((book) => (
+            <tr key={book.bookId} className="hover:bg-gray-100">
+              {columns.map((col) => (
+                <td key={col.accessor} className="px-4 py-2 border-b">
+                  {col.accessor === 'published' ? formatDate(book[col.accessor]) : book[col.accessor]}
+                </td>
+              ))}
+              <td className="px-4 py-2 border-b">
+                <button
+                  onClick={() => {
+                    setBookID(book.bookId);
+                    getBook();
+                    setBookData(book);
+                    setShowEditForm(true);
+                  }}
+                  className="text-blue-500"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => {
+                    setBookID(book.bookId);
+                    setShowDeletePopup(true);
+                  }}
+                  className="text-blue-500"
+                >
+                  🗑️
+                </button>
+
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Delete Book Confirmation Popup */}
+      {showDeletePopup && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white rounded-md p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
+            <p>Are you sure you want to delete this book?</p>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={deleteBook}
+                className="px-4 py-2 bg-red-500 text-white rounded-md mr-2"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setShowDeletePopup(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
+
+      {/* Add Book Form Popup */}
+      {showAddForm && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white rounded-md p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Add a New Book</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              addBook();
+            }}>
+              <input
+                type="text"
+                required
+                minLength={1}
+                maxLength={50}
+                value={bookData.author}
+                onChange={(e) => setBookData({ ...bookData, author: e.target.value })}
+                placeholder="Author"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="text"
+                required
+                minLength={1}
+                maxLength={100}
+                value={bookData.title}
+                onChange={(e) => setBookData({ ...bookData, title: e.target.value })}
+                placeholder="Title"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="date"
+                required
+                value={bookData.published}
+                onChange={(e) => setBookData({ ...bookData, published: e.target.value })}
+                placeholder="Published"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+
+              <input
+                type="text"
+                required
+                inputMode="numeric"
+                pattern="[0-9\s]{10,10}"
+                autoComplete="ISBN"
+                minLength={10}
+                maxLength={10}
+                value={bookData.isbn_10}
+                onChange={(e) => setBookData({ ...bookData, isbn_10: e.target.value })}
+                placeholder="ISBN 10"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+
+              {/*ISBN 13 is Optional*/}
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9\s]{13,13}"
+                autoComplete="ISBN"
+                minLength={13}
+                maxLength={13}
+                value={bookData.isbn_13}
+                onChange={(e) => setBookData({ ...bookData, isbn_13: e.target.value })}
+                placeholder="ISBN 13"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="text"
+                required
+                minLength={1}
+                maxLength={50}
+                value={bookData.publisher}
+                onChange={(e) => setBookData({ ...bookData, publisher: e.target.value })}
+                placeholder="Publisher"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+
+              {/* Other input fields go here */}
+              <div className="flex justify-end mt-4">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md mr-2"
+                >
+                  Add Book
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Book Form Popup */}
+      {showEditForm && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white rounded-md p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Edit Book</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              updateBook();
+            }}>
+              <input
+                type="text"
+                required
+                minLength={1}
+                maxLength={50}
+                value={bookData.author}
+                onChange={(e) => setBookData({ ...bookData, author: e.target.value })}
+                placeholder="Author"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="text"
+                required
+                minLength={1}
+                maxLength={100}
+                value={bookData.title}
+                onChange={(e) => setBookData({ ...bookData, title: e.target.value })}
+                placeholder="Title"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="date"
+                required
+                value={bookData.published}
+                onChange={(e) => setBookData({ ...bookData, published: e.target.value })}
+                placeholder="Published"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+
+              <input
+                type="text"
+                required
+                inputMode="numeric"
+                pattern="[0-9\s]{10,10}"
+                autoComplete="ISBN"
+                minLength={10}
+                maxLength={10}
+                value={bookData.isbn_10}
+                onChange={(e) => setBookData({ ...bookData, isbn_10: e.target.value })}
+                placeholder="ISBN 10"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+
+              {/*ISBN 13 is Optional*/}
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9\s]{13,13}"
+                autoComplete="ISBN 13"
+                minLength={13}
+                maxLength={13}
+                value={bookData.isbn_13}
+                onChange={(e) => setBookData({ ...bookData, isbn_13: e.target.value })}
+                placeholder="ISBN 13"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="text"
+                required
+                minLength={1}
+                maxLength={50}
+                value={bookData.publisher}
+                onChange={(e) => setBookData({ ...bookData, publisher: e.target.value })}
+                placeholder="Publisher"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+
+              {/* Other input fields go here */}
+              <div className="flex justify-end mt-4">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md mr-2"
+                >
+                  Update Book
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditForm(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
