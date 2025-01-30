@@ -1,84 +1,191 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 
 const CheckOutPage = () => {
   const [checkOuts, setCheckOuts] = useState([]);
-  const [newCheckOut, setNewCheckOut] = useState({ item: '', quantity: '' });
+  const [checkOutData, setCheckOutData] = useState({ book_book_id : '', person_personid: '', check_out_date: '' });
+  const [checkOutID, setCheckOutID] = useState('');
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const columns = useMemo(() => [
+    { Header: 'ID', accessor: 'ID' },
+    { Header: 'Book ID', accessor: 'book_book_id ' },
+    { Header: 'Person ID', accessor: 'person_personid' },
+    { Header: 'Check Out Date', accessor: 'check_out_date' },
+  ], []);
 
   useEffect(() => {
-    // Fetch all checkouts on component mount
-    axios.get('/api/checkouts')
-      .then(response => setCheckOuts(response.data))
-      .catch(error => console.error('Error fetching checkouts:', error));
+    fetchCheckOuts();
   }, []);
 
+  const fetchCheckOuts = () => {
+    axios.get('http://localhost:8086/api/checkouts')
+      .then(response => setCheckOuts(response.data))
+      .catch(error => console.error('Error fetching checkouts:', error));
+  };
+
   const addCheckOut = () => {
-    axios.post('/api/checkouts', newCheckOut)
-      .then(response => {
+    console.log(checkOutData);
+    axios.post('http://localhost:8086/api/checkouts', { book_book_id : '', person_personid: '', check_out_date: '' })
+      .then((response) => {
         setCheckOuts([...checkOuts, response.data]);
-        setNewCheckOut({ item: '', quantity: '' });  // Clear the input fields
+        setShowAddForm(false);
+        setCheckOutData({ book_book_id : '', person_personid: '', check_out_date: '' });
+        fetchCheckOuts();
       })
       .catch(error => console.error('Error adding checkout:', error));
   };
 
   const deleteCheckOut = (id) => {
-    axios.delete(`/api/checkouts/${id}`)
+    axios.delete(`http://localhost:8086/api/checkouts/${id}`)
       .then(() => {
-        setCheckOuts(checkOuts.filter(checkOut => checkOut.id !== id));
+        setShowDeletePopup(false);
+        fetchCheckOuts();
       })
       .catch(error => console.error('Error deleting checkout:', error));
   };
+  const formatDate = (date) => {
+    if (!date) return "";
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return new Date(date).toLocaleDateString('en-US', options);
+  };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="max-w-3xl mx-auto p-6 text-black">
       <h1 className="text-4xl font-semibold text-center mb-6">CheckOut</h1>
 
-      {/* Add New Checkout Form */}
-      <div className="text-black bg-white p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-2xl font-medium mb-4">Add New Checkout</h2>
-        <div className="flex space-x-4 mb-4">
-          <input 
-            type="text" 
-            placeholder="Item" 
-            className="border border-gray-300 p-2 rounded-md w-full"
-            value={newCheckOut.item} 
-            onChange={(e) => setNewCheckOut({ ...newCheckOut, item: e.target.value })}
-          />
-          <input 
-            type="number" 
-            placeholder="Quantity" 
-            className="border border-gray-300 p-2 rounded-md w-full"
-            value={newCheckOut.quantity} 
-            onChange={(e) => setNewCheckOut({ ...newCheckOut, quantity: e.target.value })}
-          />
-        </div>
-        <button 
-          onClick={addCheckOut} 
-          className="bg-green-500 text-white p-2 rounded-md hover:bg-green-600 transition"
-        >
-          Add Checkout
-        </button>
-      </div>
+      <button 
+        onClick={() => setShowAddForm(true)} 
+        className="bg-blue-500 text-white p-2 rounded-md mb-4"
+      >
+        Add Checkout
+      </button>
 
       {/* Display All Checkouts */}
-      <div className="text-black bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-medium mb-4">All Checkouts</h2>
-        <ul className="space-y-4">
-          {checkOuts.map(checkOut => (
-            <li key={checkOut.id} className="flex justify-between items-center">
-              <span className="text-lg">{checkOut.item} (Quantity: {checkOut.quantity})</span>
-              <button 
-                onClick={() => deleteCheckOut(checkOut.id)} 
-                className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition"
-              >
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-medium mb-4">All CheckOuts</h2>
+        <table className="min-w-full table-auto border-collapse">
+          <thead>
+            <tr>
+              {columns.map((col) => (
+                <th key={col.accessor} className="px-4 py-2 text-left border-b">{col.Header}</th>
+              ))}
+              <th className="px-4 py-2 text-left border-b">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {checkOuts.map((checkOut) => (
+              <tr key={checkOut.ID} className="hover:bg-gray-100">
+                {columns.map((col) => (
+                  <td key={col.accessor} className="px-4 py-2 border-b">
+                    {col.accessor === 'check_out_date' ? formatDate(checkOut[col.accessor]) : checkOut[col.accessor]}
+                  </td>
+                ))}
+                <td className="px-4 py-2 border-b">
+                  <button
+                    onClick={() => {
+                      // setPersonID(person.person_personid);
+                      // getPerson();
+                      // setPersonData(person);
+                      // setShowEditForm(true);
+                    }}
+                    className="text-blue-500"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => { setCheckOutID(checkOut.ID); setShowDeletePopup(true); }}
+                    className="text-blue-500"
+                  >
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {/* Delete Confirmation Popup */}
+      {showDeletePopup && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white rounded-md p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
+            <p>Are you sure you want to delete?</p>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => deleteCheckOut()}
+                className="px-4 py-2 bg-red-500 text-white rounded-md mr-2"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setShowDeletePopup(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Checkout Form Popup */}
+      {showAddForm && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white rounded-md p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Add a New Checkout</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              addCheckOut();
+            }}>
+              <input
+                type="text"
+                required
+                minLength={36}
+                maxLength={36}
+                value={checkOutData.book_book_id }
+                onChange={(e) => setCheckOutData({ ...checkOutData, book_book_id : e.target.value })}
+                placeholder="Book ID"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="text"
+                required
+                minLength={36}
+                maxLength={36}
+                value={checkOutData.person_personid}
+                onChange={(e) => setCheckOutData({ ...checkOutData, person_personid: e.target.value })}
+                placeholder="Person ID"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <input
+                type="date"
+                required
+                value={checkOutData.check_out_date}
+                onChange={(e) => setCheckOutData({ ...checkOutData, check_out_date: e.target.value })}
+                placeholder="Quantity"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <div className="flex justify-end">
+                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded-md mr-2">
+                  Add Checkout
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
