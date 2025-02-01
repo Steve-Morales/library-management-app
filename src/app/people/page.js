@@ -29,11 +29,12 @@ const PeoplePage = () => {
 
   const getPerson = () => {
     axios.get('http://localhost:8086/api/people/', personID)
-      .then(response => setPersonData(response.data))
+      .then(response => {console.log(response.data); setPersonData(response.data);})
       .catch(error => console.error('Error fetching people:', error));
   };
 
   const addPerson = () => {
+    console.log(personData);
     axios.post('http://localhost:8086/api/people', personData)
       .then(response => {
         setPeople([...people, response.data]);

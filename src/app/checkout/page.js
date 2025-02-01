@@ -65,7 +65,7 @@ const CheckOutPage = () => {
       // console.log("Item checkOut[accessor]: ", checkOut[accessor]);
 
       if(accessor === 'book_book_id'){ return checkOut[accessor].book_id; }
-      else if(accessor === 'person_personid'){ return checkOut[accessor].personid; }
+      else if(accessor === 'person_personid'){ return checkOut[accessor].personID; }
       else if(accessor === 'check_out_date'){ return formatDate(checkOut[accessor]); }
       return checkOut[accessor]; // id or null
     }
