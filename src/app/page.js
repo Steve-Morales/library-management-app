@@ -6,8 +6,8 @@ import Link from "next/link";
 
 export default function Home() {
   const [bookList, setBookList] = useState([]);
-  const [bookID, setBookID] = useState("");
-  const [book, setBook] = useState({ bookID: "", author: "", title: "", published: "", isbn_10: "", isbn_13: "", publisher: "" });
+  const [book_id, setBook_id] = useState("");
+  const [book, setBook] = useState({ book_id: "", author: "", title: "", published: "", isbn_10: "", isbn_13: "", publisher: "" });
   const [bookData, setBookData] = useState({ author: "", title: "", published: "", isbn_10: "", isbn_13: "", publisher: "" });
 
   const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -16,7 +16,7 @@ export default function Home() {
 
   const columns = useMemo(
     () => [
-      { Header: "Book ID", accessor: "bookId" },
+      { Header: "Book ID", accessor: "book_id" },
       { Header: "Author", accessor: "author" },
       { Header: "Title", accessor: "title" },
       { Header: "Published", accessor: "published" },
@@ -29,12 +29,13 @@ export default function Home() {
 
   const getBooks = () => {
     axios.get("http://localhost:8086/api/books").then((res) => {
+      // console.log(res.data);
       setBookList(res.data);
     });
   };
 
   const getBook = () => {
-    axios.get("http://localhost:8086/api/books", bookID).then((res) => {
+    axios.get("http://localhost:8086/api/books", book_id).then((res) => {
       setBook(res.data);
     });
   };
@@ -48,14 +49,14 @@ export default function Home() {
   };
 
   const updateBook = () => {
-    axios.put(`http://localhost:8086/api/books/${bookID}`, bookData).then((res) => {
+    axios.put(`http://localhost:8086/api/books/${book_id}`, bookData).then((res) => {
       console.log(res.data);
       setShowEditForm(false);
     });
   };
 
   const deleteBook = () => {
-    axios.delete(`http://localhost:8086/api/books/${bookID}`).then((res) => {
+    axios.delete(`http://localhost:8086/api/books/${book_id}`).then((res) => {
       console.log(res.data);
       setShowDeletePopup(false);
     });
@@ -111,7 +112,7 @@ export default function Home() {
         </thead>
         <tbody>
           {bookList.map((book) => (
-            <tr key={book.bookId} className="hover:bg-gray-100">
+            <tr key={book.book_id} className="hover:bg-gray-100">
               {columns.map((col) => (
                 <td key={col.accessor} className="px-4 py-2 border-b">
                   {col.accessor === 'published' ? formatDate(book[col.accessor]) : book[col.accessor]}
@@ -120,7 +121,7 @@ export default function Home() {
               <td className="px-4 py-2 border-b">
                 <button
                   onClick={() => {
-                    setBookID(book.bookId);
+                    setBook_id(book.book_id);
                     getBook();
                     setBookData(book);
                     setShowEditForm(true);
@@ -131,7 +132,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => {
-                    setBookID(book.bookId);
+                    setBook_id(book.book_id);
                     setShowDeletePopup(true);
                   }}
                   className="text-blue-500"

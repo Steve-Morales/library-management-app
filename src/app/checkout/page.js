@@ -10,8 +10,13 @@ const CheckOutPage = () => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
 
+  const formatData = () => 
+    {
+      return {"book_book_id": checkOutData.book_book_id, "person_personid": checkOutData.person_personid, "check_out_date": checkOutData.check_out_date};
+    }
+
   const columns = useMemo(() => [
-    { Header: 'ID', accessor: 'ID' },
+    { Header: 'ID', accessor: 'id' },
     { Header: 'Book ID', accessor: 'book_book_id ' },
     { Header: 'Person ID', accessor: 'person_personid' },
     { Header: 'Check Out Date', accessor: 'check_out_date' },
@@ -23,13 +28,13 @@ const CheckOutPage = () => {
 
   const fetchCheckOuts = () => {
     axios.get('http://localhost:8086/api/checkouts')
-      .then(response => setCheckOuts(response.data))
+      .then(response => {console.log(response.data); setCheckOuts(response.data);})
       .catch(error => console.error('Error fetching checkouts:', error));
   };
 
   const addCheckOut = () => {
     console.log(checkOutData);
-    axios.post('http://localhost:8086/api/checkouts', { book_book_id : '', person_personid: '', check_out_date: '' })
+    axios.post('http://localhost:8086/api/checkouts', checkOutData)
       .then((response) => {
         setCheckOuts([...checkOuts, response.data]);
         setShowAddForm(false);
@@ -52,6 +57,18 @@ const CheckOutPage = () => {
     const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
     return new Date(date).toLocaleDateString('en-US', options);
   };
+
+  const displayData = (checkOut, accessor)=>
+    {
+      // console.log("CHECKOUT:", checkOut);
+      // console.log("Accessor:", accessor);
+      // console.log("Item checkOut[accessor]: ", checkOut[accessor]);
+
+      if(accessor === 'book_book_id'){ return checkOut[accessor].book_id; }
+      else if(accessor === 'person_personid'){ return checkOut[accessor].personid; }
+      else if(accessor === 'check_out_date'){ return formatDate(checkOut[accessor]); }
+      return checkOut[accessor]; // id or null
+    }
 
   return (
     <div className="max-w-3xl mx-auto p-6 text-black">
@@ -78,10 +95,10 @@ const CheckOutPage = () => {
           </thead>
           <tbody>
             {checkOuts.map((checkOut) => (
-              <tr key={checkOut.ID} className="hover:bg-gray-100">
+              <tr key={checkOut.id} className="hover:bg-gray-100">
                 {columns.map((col) => (
                   <td key={col.accessor} className="px-4 py-2 border-b">
-                    {col.accessor === 'check_out_date' ? formatDate(checkOut[col.accessor]) : checkOut[col.accessor]}
+                    {displayData(checkOut,col.accessor.trim())}
                   </td>
                 ))}
                 <td className="px-4 py-2 border-b">
