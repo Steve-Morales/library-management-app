@@ -51,8 +51,21 @@ export default function Home() {
     });
   };
 
+
+  /**
+   * creates and ISBN 13 if using ISBN 10. Must be called before adding the 
+   * book so `bookData` can be updated in time.
+   */
+  const createISBN13 = () => {
+    if (false == isISBN13) {
+      let isbn13 = "978".concat(bookData.isbn_10);
+      console.log(isbn13);
+      setBookData({ ...bookData, isbn_13: isbn13 });
+    }
+  }
+
   const addBook = () => {
-    if (false == isISBN13) { setBookData({ ...bookData, isbn_13: ("978" + bookData.isbn_10) }); }
+
     axios.post("http://localhost:8086/api/books", bookData).then((res) => {
       console.log(res.data);
       setShowAddForm(false);
@@ -136,7 +149,7 @@ export default function Home() {
 
 
       {/* Table for displaying books */}
-      {!isLoading && <table className="min-w-full table-auto border-collapse bg-white text-black rounded-md">
+      {!isLoading && <table className="min-w-full max-w-full table-auto border-collapse bg-white text-black rounded-md">
         <thead>
           <tr>
             {columns.map((col) => (
@@ -227,6 +240,7 @@ export default function Home() {
             <h2 className="text-xl font-semibold mb-4">Add a New Book</h2>
             <form onSubmit={(e) => {
               e.preventDefault();
+              createISBN13();
               addBook();
             }}>
               <p className="font-bold">Author</p>

@@ -45,8 +45,8 @@ const CheckOutPage = () => {
       .catch(error => console.error('Error adding checkout:', error));
   };
 
-  const deleteCheckOut = (id) => {
-    axios.delete(`http://localhost:8086/api/checkouts/${id}`)
+  const deleteCheckOut = () => {
+    axios.delete(`http://localhost:8086/api/checkouts/${checkOutID}`)
       .then(() => {
         setShowDeletePopup(false);
         fetchCheckOuts();
@@ -116,7 +116,7 @@ const CheckOutPage = () => {
                     ✏️
                   </button>
                   <button
-                    onClick={() => { setCheckOutID(checkOut.ID); setShowDeletePopup(true); }}
+                    onClick={() => { setCheckOutID(checkOut.id); setShowDeletePopup(true); }}
                     className="text-blue-500"
                   >
                     🗑️
