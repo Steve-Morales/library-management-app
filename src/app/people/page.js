@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import Navbar from '../navbar';
 
 const PeoplePage = () => {
   const [people, setPeople] = useState([]);
@@ -68,6 +69,7 @@ const PeoplePage = () => {
 
   return (
     <div className="text-black max-w-3xl mx-auto p-6">
+      <Navbar/>
       <h1 className="text-4xl font-semibold text-center mb-6">People</h1>
 
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">

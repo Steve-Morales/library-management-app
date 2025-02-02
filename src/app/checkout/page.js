@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import Navbar from '../navbar';
 
 const CheckOutPage = () => {
   const [checkOuts, setCheckOuts] = useState([]);
@@ -72,6 +73,7 @@ const CheckOutPage = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-6 text-black">
+      <Navbar/>
       <h1 className="text-4xl font-semibold text-center mb-6">CheckOut</h1>
 
       <button 

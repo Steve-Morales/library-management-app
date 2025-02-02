@@ -3,6 +3,9 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import { motion } from "framer-motion";
+
+import Navbar from "./navbar";
 
 export default function Home() {
   const [bookList, setBookList] = useState([]);
@@ -10,9 +13,13 @@ export default function Home() {
   const [book, setBook] = useState({ book_id: "", author: "", title: "", published: "", isbn_10: "", isbn_13: "", publisher: "" });
   const [bookData, setBookData] = useState({ author: "", title: "", published: "", isbn_10: "", isbn_13: "", publisher: "" });
 
+  const [isISBN13, setIsISBN13] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteSelect, setShowDeleteSelect] = useState(false);
+  const [deleteList, setDeleteList] = useState([]);
+  const [showConfirmDeleteAll, setShowConfirmDeleteAll] = useState(false);
 
   const columns = useMemo(
     () => [
@@ -41,7 +48,7 @@ export default function Home() {
   };
 
   const addBook = () => {
-    console.log(bookData);
+    if (false == isISBN13) { setBookData({ ...bookData, isbn_13: ("978" + bookData.isbn_10) }); }
     axios.post("http://localhost:8086/api/books", bookData).then((res) => {
       console.log(res.data);
       setShowAddForm(false);
@@ -62,6 +69,18 @@ export default function Home() {
     });
   };
 
+  const deleteAllSelected = () => {
+    let idList = deleteList;
+    for (let i = 0; i < idList.length; i++) {
+      let current_book_id = idList[i];
+      axios.delete(`http://localhost:8086/api/books/${current_book_id}`).then((res) => {
+        console.log(res.data);
+        setDeleteList(prevItems => prevItems.filter(item => item !== current_book_id));
+      });
+    }
+
+  }
+
   useEffect(() => {
     getBooks();
   }, []);
@@ -73,35 +92,47 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h1>Welcome to the App</h1>
-        <p>Select a page to manage:</p>
-        <ul style={{ listStyleType: 'none' }}>
-          <li style={{ margin: '10px' }}>
-            <Link href="/people" style={{ color: 'blue', textDecoration: 'underline' }}>
-              <p >Go to People Page</p>
-            </Link>
-          </li>
-          <li style={{ margin: '10px', color: 'blue', textDecoration: 'underline' }}>
-            <Link href="/checkout">
-              <p>Go to CheckOut Page</p>
-            </Link>
-          </li>
-        </ul>
-      </div>
-      <h1 className="text-3xl font-bold text-center mb-8">Book Management</h1>
+    <div className="">
+      <Navbar />
 
-      {/* Add Book Button */}
-      <button
-        onClick={() => setShowAddForm(true)}
-        className="px-4 py-2 bg-blue-500 text-white rounded-md mb-4"
-      >
-        Add Book
-      </button>
+      <h1 className="text-3xl font-bold text-center mb-8">Book Management</h1>
+      <div className="flex justify-end items-center space-x-2">
+        {/* Delete Books Button */}
+        {!showDeleteSelect && <button
+          onClick={() => setShowDeleteSelect(true)}
+          className="px-4 py-2 bg-red-500 text-white rounded-full mb-4"
+        >
+          -
+        </button>}
+        {showDeleteSelect &&
+          <div className="space-x-2">
+            <button
+              onClick={() => setShowConfirmDeleteAll(true)}
+              className="px-4 py-2 bg-red-500 text-white rounded-full mb-4"
+            >
+              Delete All
+            </button>
+            <button
+              onClick={() => setShowDeleteSelect(false)}
+              className="px-4 py-2 bg-slate-600 text-white rounded-full mb-4"
+            >
+              Cancel
+            </button>
+          </div>
+
+        }
+        {/* Add Book Button */}
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="px-4 py-2 bg-blue-500 text-white rounded-full mb-4"
+        >
+          +
+        </button>
+      </div>
+
 
       {/* Table for displaying books */}
-      <table className="min-w-full table-auto border-collapse">
+      <table className="min-w-full table-auto border-collapse bg-white text-black rounded-md">
         <thead>
           <tr>
             {columns.map((col) => (
@@ -118,7 +149,7 @@ export default function Home() {
                   {col.accessor === 'published' ? formatDate(book[col.accessor]) : book[col.accessor]}
                 </td>
               ))}
-              <td className="px-4 py-2 border-b">
+              <td className="px-4 py-2 border-b items-center">
                 <button
                   onClick={() => {
                     setBook_id(book.book_id);
@@ -139,6 +170,15 @@ export default function Home() {
                 >
                   🗑️
                 </button>
+
+                {showDeleteSelect &&
+                  <div className="inline">
+                    <input type="checkbox" onChange={(e) => {
+                      if (true == e.target.checked) { setDeleteList([...deleteList, book.book_id]); }
+                      else if (false == e.target.checked) { setDeleteList(prevItems => prevItems.filter(item => item !== book.book_id)); }
+                    }} />
+                  </div>
+                }
 
               </td>
             </tr>
@@ -179,6 +219,7 @@ export default function Home() {
               e.preventDefault();
               addBook();
             }}>
+              <p className="font-bold">Author</p>
               <input
                 type="text"
                 required
@@ -189,6 +230,8 @@ export default function Home() {
                 placeholder="Author"
                 className="w-full p-2 border mb-4 rounded-md"
               />
+
+              <p className="font-bold">Title</p>
               <input
                 type="text"
                 required
@@ -199,6 +242,19 @@ export default function Home() {
                 placeholder="Title"
                 className="w-full p-2 border mb-4 rounded-md"
               />
+
+              <p className="font-bold">Publisher</p>
+              <input
+                type="text"
+                required
+                minLength={1}
+                maxLength={50}
+                value={bookData.publisher}
+                onChange={(e) => setBookData({ ...bookData, publisher: e.target.value })}
+                placeholder="Publisher"
+                className="w-full p-2 border mb-4 rounded-md"
+              />
+              <p className="font-bold">Published Date</p>
               <input
                 type="date"
                 required
@@ -208,41 +264,46 @@ export default function Home() {
                 className="w-full p-2 border mb-4 rounded-md"
               />
 
-              <input
-                type="text"
-                required
-                inputMode="numeric"
-                pattern="[0-9\s]{10,10}"
-                autoComplete="ISBN"
-                minLength={10}
-                maxLength={10}
-                value={bookData.isbn_10}
-                onChange={(e) => setBookData({ ...bookData, isbn_10: e.target.value })}
-                placeholder="ISBN 10"
-                className="w-full p-2 border mb-4 rounded-md"
-              />
 
-              {/*ISBN 13 is Optional*/}
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9\s]{13,13}"
-                autoComplete="ISBN"
-                minLength={13}
-                maxLength={13}
-                value={bookData.isbn_13}
-                onChange={(e) => setBookData({ ...bookData, isbn_13: e.target.value })}
-                placeholder="ISBN 13"
-                className="w-full p-2 border mb-4 rounded-md"
-              />
+              <div className="relative w-2/3 bg-gray-800 text-white p-1 flex items-center rounded-md my-2">
+                <motion.div
+                  className="absolute top-0 bottom-0 w-1/2 bg-gray-600 rounded-md"
+                  animate={{ x: isISBN13 ? "100%" : "0%" }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                />
+                <button
+                  className="relative z-10 flex-1 text-center p-2"
+                  onClick={() => setIsISBN13(false)}
+                >
+                  ISBN-10
+                </button>
+                <button
+                  className="relative z-10 flex-1 text-center p-2"
+                  onClick={() => setIsISBN13(true)}
+                >
+                  ISBN-13
+                </button>
+              </div>
+
               <input
                 type="text"
                 required
-                minLength={1}
-                maxLength={50}
-                value={bookData.publisher}
-                onChange={(e) => setBookData({ ...bookData, publisher: e.target.value })}
-                placeholder="Publisher"
+                inputMode="numeric"
+                pattern={isISBN13 ? "[0-9\s]{13,13}" : "[0-9\s]{10,10}"}
+                autoComplete="ISBN"
+                minLength={isISBN13 ? 13 : 10}
+                maxLength={isISBN13 ? 13 : 10}
+                value={isISBN13 ? bookData.isbn_13 : bookData.isbn_10}
+                onChange={(e) => {
+                  if (isISBN13) {
+                    setBookData({ ...bookData, isbn_13: e.target.value });
+
+                  }
+                  else {
+                    setBookData({ ...bookData, isbn_10: e.target.value });
+                  }
+                }}
+                placeholder={isISBN13 ? "ISBN 13" : "ISBN 10"}
                 className="w-full p-2 border mb-4 rounded-md"
               />
 
@@ -363,6 +424,38 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Edit Book Form Popup */}
+      {showConfirmDeleteAll && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white rounded-md p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Confirm</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // updateBook();
+              deleteAllSelected();
+              setShowConfirmDeleteAll(false);
+            }}>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-500 text-white rounded-md mr-2"
+                >
+                  Delete All Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmDeleteAll(false)}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
