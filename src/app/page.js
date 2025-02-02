@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 import Navbar from "./navbar";
+import LoadingSpinner from "./.Components/LoadingSpinner";
 
 export default function Home() {
   const [bookList, setBookList] = useState([]);
@@ -20,6 +21,8 @@ export default function Home() {
   const [showDeleteSelect, setShowDeleteSelect] = useState(false);
   const [deleteList, setDeleteList] = useState([]);
   const [showConfirmDeleteAll, setShowConfirmDeleteAll] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(true);
 
   const columns = useMemo(
     () => [
@@ -38,6 +41,7 @@ export default function Home() {
     axios.get("http://localhost:8086/api/books").then((res) => {
       // console.log(res.data);
       setBookList(res.data);
+      setIsLoading(false);
     });
   };
 
@@ -132,7 +136,7 @@ export default function Home() {
 
 
       {/* Table for displaying books */}
-      <table className="min-w-full table-auto border-collapse bg-white text-black rounded-md">
+      {!isLoading && <table className="min-w-full table-auto border-collapse bg-white text-black rounded-md">
         <thead>
           <tr>
             {columns.map((col) => (
@@ -185,6 +189,12 @@ export default function Home() {
           ))}
         </tbody>
       </table>
+      }
+
+      {isLoading &&
+        <LoadingSpinner />
+      }
+
 
       {/* Delete Book Confirmation Popup */}
       {showDeletePopup && (
