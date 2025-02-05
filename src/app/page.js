@@ -1,8 +1,7 @@
 'use client'
-import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import Link from "next/link";
 import { motion } from "framer-motion";
 
 import Navbar from "./navbar";
@@ -64,13 +63,13 @@ export default function Home() {
     }
   }
 
-  const addBook = () => {
-
+  const addBook = useCallback (() => {
+    createISBN13();
     axios.post("http://localhost:8086/api/books", bookData).then((res) => {
       console.log(res.data);
       setShowAddForm(false);
     });
-  };
+  }, [bookData]);
 
   const updateBook = () => {
     axios.put(`http://localhost:8086/api/books/${book_id}`, bookData).then((res) => {
@@ -109,7 +108,7 @@ export default function Home() {
   };
 
   return (
-    <div className="">
+    <div>
       <Navbar />
 
       <h1 className="text-3xl font-bold text-center mb-8">Book Management</h1>
@@ -204,7 +203,7 @@ export default function Home() {
       </table>
       }
 
-      {isLoading &&
+      {true &&
         <LoadingSpinner />
       }
 
