@@ -8,9 +8,13 @@ const PeoplePage = () => {
   const [personData, setPersonData] = useState({ name: "", address: "", phoneNumber: "" });
   //const [updatePerson, setUpdatePerson] = useState({ name: "", address: "", phoneNumber: "" });
   const [personID, setPersonID] = useState("");
+  const [showAddForm, setShowAddForm] = useState("");
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDeleteSelect, setShowDeleteSelect] = useState(false);
+  const [deleteList, setDeleteList] = useState([]);
+  const [showConfirmDeleteAll, setShowConfirmDeleteAll] = useState(false);
 
   const columns = useMemo(() => [
     { Header: 'PersonID', accessor: 'personID' },
@@ -25,11 +29,10 @@ const PeoplePage = () => {
   const getPersonList = () => {
     // Fetch all people on component mount
     axios.get('http://localhost:8086/api/people')
-      .then((response) => 
-        {
-          setPeople(response.data);
-          setIsLoading(false);
-        })
+      .then((response) => {
+        setPeople(response.data);
+        setIsLoading(false);
+      })
       .catch(error => console.error('Error fetching people:', error));
   };
 
@@ -72,68 +75,56 @@ const PeoplePage = () => {
       .catch(error => console.error('Error deleting person:', error));
   };
 
+  const deleteAllSelected = () => {
+    let idList = deleteList;
+    for (let i = 0; i < idList.length; i++) {
+      let current_person_id = idList[i];
+      axios.delete(`http://localhost:8086/api/people/${current_person_id}`).then((res) => {
+        console.log(res.data);
+        setDeleteList(prevItems => prevItems.filter(item => item !== current_person_id));
+        setPeople(prevItems => prevItems.filter(item => item.personID !== current_person_id));
+      });
+    }
+
+  }
+
   return (
     <div className="text-black">
       <Navbar />
-      <h1 className="text-4xl font-semibold text-center mb-6">People</h1>
-
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-2xl font-medium mb-4">Add New Person</h2>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          addPerson();  // Call the addPerson function when the form is submitted
-        }}>
-          <div className="flex space-x-4 mb-4">
-            <input
-              type="text"
-              required
-              minLength={2}
-              maxLength={100}
-              placeholder="Name"
-              className="border border-gray-300 p-2 rounded-md w-full"
-              value={personData.name}
-              onChange={(e) => setPersonData({ ...personData, name: e.target.value })}
-            />
-            <input
-              type="text"
-              minLength={2}
-              maxLength={150}
-              placeholder="Address"
-              className="border border-gray-300 p-2 rounded-md w-full"
-              value={personData.address}
-              onChange={(e) => setPersonData({ ...personData, address: e.target.value })}
-            />
-            <input
-              type="text"
-              required
-              inputMode="numeric"
-              pattern="[0-9\s]{10,10}"
-              minLength={10}
-              maxLength={15}
-              placeholder="Phone Number"
-              className="border border-gray-300 p-2 rounded-md w-full"
-              value={personData.phoneNumber}
-              onChange={(e) => setPersonData({ ...personData, phoneNumber: e.target.value })}
-            />
-          </div>
-          <div className="flex justify-end mt-4">
+      <h1 className="text-3xl font-bold text-center mb-8">Person Management</h1>
+      <div className="flex justify-end items-center space-x-2">
+        {/* Delete Books Button */}
+        {!showDeleteSelect && <button
+          onClick={() => setShowDeleteSelect(true)}
+          className="px-4 py-2 bg-red-500 text-white rounded-full mb-4"
+        >
+          -
+        </button>}
+        {showDeleteSelect &&
+          <div className="space-x-2">
             <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+              onClick={() => setShowConfirmDeleteAll(true)}
+              className="px-4 py-2 bg-red-500 text-white rounded-full mb-4"
             >
-              Add Person
+              Delete All
             </button>
             <button
-              type="button"
-              onClick={() => setPersonData({ name: '', address: '', phoneNumber: '' })}
-              className="px-4 py-2 bg-gray-500 text-white rounded-md ml-2"
+              onClick={() => setShowDeleteSelect(false)}
+              className="px-4 py-2 bg-slate-600 text-white rounded-full mb-4"
             >
               Cancel
             </button>
           </div>
-        </form>
+
+        }
+        {/* Add Book Button */}
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="px-4 py-2 bg-blue-500 text-white rounded-full mb-4"
+        >
+          +
+        </button>
       </div>
-      
 
       {isLoading &&
         <div className="flex justify-center items-center min-w-full max-w-full table-auto border-collapse bg-white text-black rounded-md">
@@ -147,6 +138,66 @@ const PeoplePage = () => {
         </div>
 
       }
+
+      {showAddForm && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 className="text-2xl font-medium mb-4">Add New Person</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              addPerson();  // Call the addPerson function when the form is submitted
+            }}>
+              <div className="flex space-x-4 mb-4">
+                <input
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  placeholder="Name"
+                  className="border border-gray-300 p-2 rounded-md w-full"
+                  value={personData.name}
+                  onChange={(e) => setPersonData({ ...personData, name: e.target.value })}
+                />
+                <input
+                  type="text"
+                  minLength={2}
+                  maxLength={150}
+                  placeholder="Address"
+                  className="border border-gray-300 p-2 rounded-md w-full"
+                  value={personData.address}
+                  onChange={(e) => setPersonData({ ...personData, address: e.target.value })}
+                />
+                <input
+                  type="text"
+                  required
+                  inputMode="numeric"
+                  pattern="[0-9\s]{10,10}"
+                  minLength={10}
+                  maxLength={15}
+                  placeholder="Phone Number"
+                  className="border border-gray-300 p-2 rounded-md w-full"
+                  value={personData.phoneNumber}
+                  onChange={(e) => setPersonData({ ...personData, phoneNumber: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                >
+                  Add Person
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md ml-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>)}
 
       {showEditForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
@@ -210,48 +261,56 @@ const PeoplePage = () => {
 
       {!isLoading &&
         <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-medium mb-4">All People</h2>
-        <table className="min-w-full table-auto border-collapse">
-          <thead>
-            <tr>
-              {columns.map((col) => (
-                <th key={col.accessor} className="px-4 py-2 text-left border-b">{col.Header}</th>
-              ))}
-              <th className="px-4 py-2 text-left border-b">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {people.map((person) => (
-              <tr key={person.personID} className="hover:bg-gray-100">
+          <h2 className="text-2xl font-medium mb-4">All People</h2>
+          <table className="min-w-full table-auto border-collapse">
+            <thead>
+              <tr>
                 {columns.map((col) => (
-                  <td key={col.accessor} className="px-4 py-2 border-b">
-                    {person[col.accessor]}
-                  </td>
+                  <th key={col.accessor} className="px-4 py-2 text-left border-b">{col.Header}</th>
                 ))}
-                <td className="px-4 py-2 border-b">
-                  <button
-                    onClick={() => {
-                      setPersonID(person.personID);
-                      getPerson();
-                      setPersonData(person);
-                      setShowEditForm(true);
-                    }}
-                    className="text-blue-500"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => { setPersonID(person.personID); setShowDeletePopup(true); }}
-                    className="text-blue-500"
-                  >
-                    🗑️
-                  </button>
-                </td>
+                <th className="px-4 py-2 text-left border-b">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {people.map((person) => (
+                <tr key={person.personID} className="hover:bg-gray-100">
+                  {columns.map((col) => (
+                    <td key={col.accessor} className="px-4 py-2 border-b">
+                      {person[col.accessor]}
+                    </td>
+                  ))}
+                  <td className="px-4 py-2 border-b">
+                    <button
+                      onClick={() => {
+                        setPersonID(person.personID);
+                        getPerson();
+                        setPersonData(person);
+                        setShowEditForm(true);
+                      }}
+                      className="text-blue-500"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => { setPersonID(person.personID); setShowDeletePopup(true); }}
+                      className="text-blue-500"
+                    >
+                      🗑️
+                    </button>
+                    {showDeleteSelect &&
+                      <div className="inline">
+                        <input type="checkbox" onChange={(e) => {
+                          if (true == e.target.checked) { setDeleteList([...deleteList, person.personID]); }
+                          else if (false == e.target.checked) { setDeleteList(prevItems => prevItems.filter(item => item !== person.personID)); }
+                        }} />
+                      </div>
+                    }
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       }
 
       {/* Delete Book Confirmation Popup */}
@@ -277,7 +336,36 @@ const PeoplePage = () => {
           </div>
         </div>
       )}
-
+      {/* Confirm Delete All Popup */}
+      {showConfirmDeleteAll && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
+          <div className="bg-white rounded-md p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Confirm</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // updateBook();
+              deleteAllSelected();
+              setShowConfirmDeleteAll(false);
+            }}>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-500 text-white rounded-md mr-2"
+                >
+                  Delete All Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmDeleteAll(false)}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
