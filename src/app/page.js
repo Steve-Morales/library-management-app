@@ -74,6 +74,12 @@ export default function Home() {
     axios.put(`http://localhost:8086/api/books/${book_id}`, bookData).then((res) => {
       console.log(res.data);
       setShowEditForm(false);
+      
+      // update table to user (server should already be updated)
+      const newList = [...bookList];
+      const ind = newList.findIndex(item => item.book_id === book_id);
+      newList[ind] = bookData;
+      setBookList(newList);
     });
   };
 
@@ -91,6 +97,7 @@ export default function Home() {
       axios.delete(`http://localhost:8086/api/books/${current_book_id}`).then((res) => {
         console.log(res.data);
         setDeleteList(prevItems => prevItems.filter(item => item !== current_book_id));
+        setBookList(prevItems => prevItems.filter(item => item !== current_book_id));
       });
     }
 
@@ -455,7 +462,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Edit Book Form Popup */}
+      {/* Confirm Delete All Popup */}
       {showConfirmDeleteAll && (
         <div className="fixed inset-0 flex items-center justify-center p-4 bg-black bg-opacity-50 text-black">
           <div className="bg-white rounded-md p-6 w-96">
