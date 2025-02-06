@@ -5,7 +5,6 @@ import axios from "axios";
 import { motion } from "framer-motion";
 
 import Navbar from "./navbar";
-import LoadingSpinner from "./.Components/LoadingSpinner";
 
 export default function Home() {
   const [bookList, setBookList] = useState([]);

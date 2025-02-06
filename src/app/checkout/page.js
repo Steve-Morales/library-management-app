@@ -106,10 +106,6 @@ const CheckOutPage = () => {
                 <td className="px-4 py-2 border-b">
                   <button
                     onClick={() => {
-                      // setPersonID(person.person_personid);
-                      // getPerson();
-                      // setPersonData(person);
-                      // setShowEditForm(true);
                     }}
                     className="text-blue-500"
                   >
