@@ -6,12 +6,12 @@ export default function Navbar() {
   return (
     <nav className="bg-gray-900 text-white p-4 shadow-lg">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Brand</h1>
+        <h1 className="text-2xl font-bold">Library Management</h1>
 
         {/* Desktop Menu */}
         <ul className="hidden md:flex space-x-6">
           <li className="hover:text-gray-400 cursor-pointer">
-            <Link href={"/"}>Home</Link>
+            <Link href={"/"}>Books</Link>
           </li>
           <li className="hover:text-gray-400 cursor-pointer">
             <Link href={"/people"}>People</Link>
